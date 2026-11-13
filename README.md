@@ -2,200 +2,115 @@
 
 [![CI](https://github.com/victor-germano/verificador-de-vulnerabilidades/actions/workflows/ci.yml/badge.svg)](https://github.com/victor-germano/verificador-de-vulnerabilidades/actions/workflows/ci.yml)
 
-Plataforma de análise estática de código (**SAST — Static Application
-Security Testing**) para identificar vulnerabilidades de segurança em
-projetos de código-fonte, com engine de regras extensível, suporte
-multi-linguagem, dashboard de risco e relatórios exportáveis.
+> **Static Application Security Testing platform — 38 detection rules, real AST analysis across 8 languages, Docker Compose stack, standalone CLI and exportable reports.**
+
+Plataforma de análise estática de código para identificar vulnerabilidades de segurança em projetos, com engine de regras extensível, suporte multi-linguagem e dashboard de risco.
+
+---
 
 ## Telas
 
-Dashboard com Security Score médio, distribuição por severidade, tendência e ranking das vulnerabilidades e dos arquivos mais afetados. Os dados abaixo vêm de scans em aplicações propositalmente vulneráveis (OWASP Juice Shop, DVWA e WebGoat) e em dois frameworks maduros (Flask e Express):
+Dashboard com Security Score, distribuição por severidade, tendência histórica e ranking de vulnerabilidades. Dados gerados a partir de scans em aplicações intencionalmente vulneráveis (OWASP Juice Shop, DVWA, WebGoat) e em dois frameworks de produção (Flask, Express):
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
 ![Projetos](docs/screenshots/projetos.png)
 
-## Objetivo
+---
 
-Analisar um projeto (arquivo, pasta `.zip` ou repositório Git público) e
-produzir, para cada vulnerabilidade encontrada: localização exata,
-severidade, explicação técnica, impacto, nível de confiança, recomendação de
-correção e um exemplo de código seguro — com metadados de OWASP, CWE e CVSS.
-Ver [`docs/architecture.md`](docs/architecture.md) para o desenho completo.
+## O que faz
+
+Para cada vulnerabilidade encontrada, o sistema produz: localização exata (arquivo + linha), severidade, explicação técnica, impacto, nível de confiança, recomendação de correção com exemplo de código seguro — anotado com OWASP, CWE e CVSS.
+
+---
 
 ## Funcionalidades
 
-- **38 regras de detecção** cobrindo Injection (SQL/NoSQL/Command/Code/LDAP/
-  XPath/SSTI), Insecure Deserialization, XXE, SSRF, XSS (refletido e DOM),
-  Path Traversal, Unsafe File Upload, Unsafe Reflection, File Inclusion,
-  Resource Leak, Insecure Temporary Files, criptografia fraca, segredos
-  hardcoded, cookies inseguros, open redirect e logging sensível.
-- **Análise via AST real para as 8 linguagens do catálogo** — Python
-  (`ast`), JavaScript, TypeScript, Java, PHP, Go, Rust e C# (`tree-sitter`)
-  — não regex. Adicionar uma 9ª linguagem segue o mesmo processo (ver
-  [`docs/adding-a-language.md`](docs/adding-a-language.md)).
-- **Três formas de escanear**: upload de arquivo/pasta `.zip`, repositório
-  Git público ou **privado** (via personal access token) ou linha de
-  comando (`sast-cli`).
-- **Security Score**, tendência histórica, top vulnerabilidades/arquivos no
-  dashboard.
-- **Relatórios** em JSON, Markdown, HTML e PDF.
-- **CLI standalone** (`sast-cli`) que roda o mesmo motor sem precisar de API
-  nem banco de dados — útil em pipelines de CI de outros projetos.
-- **Colaboração por projeto**: convide pessoas como editor (roda scans) ou
-  viewer (só visualiza), com o dono do projeto gerenciando quem tem acesso.
-- **IA opcional (Anthropic)**: explicação de um finding, sugestão de
-  correção e resumo de um scan em linguagem natural — desativado com
-  segurança (`501`) se nenhuma `ANTHROPIC_API_KEY` for configurada.
+- **38 regras de detecção** — Injection (SQL/NoSQL/Command/Code/LDAP/XPath/SSTI), Insecure Deserialization, XXE, SSRF, XSS, Path Traversal, Unsafe File Upload, Unsafe Reflection, criptografia fraca, segredos hardcoded, cookies inseguros, open redirect, logging sensível e mais
+- **AST real para 8 linguagens** — Python (`ast`), JavaScript, TypeScript, Java, PHP, Go, Rust e C# (`tree-sitter`) — não regex
+- **3 formas de scan** — upload de arquivo/`.zip`, repositório Git público ou privado (via PAT), ou linha de comando (`sast-cli`)
+- **Security Score** com tendência histórica e top vulnerabilidades/arquivos afetados
+- **Relatórios** em JSON, Markdown, HTML e PDF
+- **CLI standalone** (`sast-cli`) — roda o mesmo motor sem API nem banco, útil em pipelines de CI
+- **Colaboração por projeto** — editor (roda scans) ou viewer (somente leitura)
+- **IA opcional** (Anthropic Claude) — explicação de findings e resumo de scans em linguagem natural; desativado graciosamente se `ANTHROPIC_API_KEY` não estiver configurada (`501`)
+
+---
 
 ## Stack
 
 | Camada | Tecnologias |
 |---|---|
-| Backend | Python 3.12, FastAPI, SQLAlchemy 2 (async), Alembic, Pydantic |
-| Scanner engine | `ast` (Python), `tree-sitter` (JS/TS/Java/PHP/Go/Rust/C#), GitPython, regras em YAML |
-| IA (opcional) | SDK oficial `anthropic` (Claude) |
-| Banco | PostgreSQL |
-| Frontend | React, TypeScript, Vite, Tailwind CSS v4, Radix UI, TanStack Query, React Hook Form, Zod, Recharts |
-| Infra | Docker, Docker Compose, nginx |
+| Backend | Python 3.12 · FastAPI · SQLAlchemy 2 (async) · Alembic · Pydantic |
+| Scanner Engine | `ast` (Python) · `tree-sitter` (JS/TS/Java/PHP/Go/Rust/C#) · GitPython · regras YAML |
+| IA (opcional) | Anthropic SDK (Claude) |
+| Banco de Dados | PostgreSQL |
+| Frontend | React · TypeScript · Vite · Tailwind v4 · Radix UI · TanStack Query · Recharts |
+| Infraestrutura | Docker · Docker Compose · nginx |
 
-## Estrutura do repositório
+---
 
-```
-root/
-├── backend/     API + scanner engine (ver backend/app/...)
-├── frontend/    SPA React
-├── docker/      Dockerfiles e nginx.conf
-├── docs/        Documentação detalhada (arquitetura, como estender)
-└── scripts/     Scripts de bootstrap
-```
+## Rodando
 
-## Como rodar
-
-### Opção A — Docker Compose (recomendado)
+### Docker Compose (recomendado)
 
 ```bash
-cp .env.example .env   # ajuste SECRET_KEY antes de ir para produção
+cp .env.example .env
 docker compose up --build
+# Frontend: http://localhost:8080
+# API + docs interativas: http://localhost:8000/api/docs
 ```
 
-- Frontend: http://localhost:8080
-- API: http://localhost:8000 (docs interativas em `/api/docs`)
-- Postgres: `localhost:5432` (usuário/senha/banco `sast`)
+Migrações do Alembic rodam automaticamente no start do container.
 
-As migrações do Alembic rodam automaticamente no start do container do
-backend.
+Para habilitar IA, defina `ANTHROPIC_API_KEY` no `.env` antes de subir.
 
-Para habilitar os recursos de IA (explicar finding / sugerir correção /
-resumir scan), defina `ANTHROPIC_API_KEY` no `.env` antes de subir o
-compose; sem a chave, esses endpoints respondem `501` normalmente — o
-resto da aplicação funciona igual.
-
-### Opção B — Desenvolvimento local (sem Docker)
-
-Pré-requisitos: Python 3.12+, Node 20+, PostgreSQL rodando localmente (ou
-via `docker compose up postgres`).
+### Desenvolvimento local
 
 ```bash
-./scripts/setup.sh   # cria o venv, instala deps do backend e do frontend
+./scripts/setup.sh   # cria venv, instala deps backend e frontend
+# Backend: uvicorn app.main:app --reload
+# Frontend: npm run dev  (proxy /api → :8000 já configurado)
 ```
 
-Ou manualmente:
-
-```bash
-# Backend
-cd backend
-python -m venv .venv && source .venv/bin/activate   # .venv/Scripts/activate no Windows
-pip install -e ".[dev]"
-alembic upgrade head
-uvicorn app.main:app --reload
-
-# Frontend (em outro terminal)
-cd frontend
-npm install
-npm run dev
-```
-
-O Vite já vem configurado para fazer proxy de `/api` para
-`http://localhost:8000` (`frontend/vite.config.ts`), então basta abrir
-http://localhost:5173.
-
-## Banco de dados
-
-Modelo relacional: `users` → `projects` → `scans` → `findings`, com
-`project_collaborators` ligando `users` a `projects` extras (papel
-`editor`/`viewer`) além do dono (ver `backend/app/models/`). Migrações
-ficam em `backend/alembic/versions/`.
-
-```bash
-cd backend
-alembic upgrade head                              # aplicar migrações
-alembic revision --autogenerate -m "descrição"     # gerar uma nova migração
-```
+---
 
 ## CLI standalone
 
-Roda o mesmo motor de análise sem precisar da API nem de um banco de dados
-- útil para rodar em CI de outros projetos ou localmente:
-
 ```bash
-cd backend
-pip install -e .
+cd backend && pip install -e .
 sast-cli /caminho/do/projeto --format markdown --output relatorio.md
 sast-cli /caminho/do/projeto --fail-on high   # sai com código 1 se achar algo >= high
 ```
+
+---
 
 ## Testes
 
 ```bash
 cd backend
 pytest --cov --cov-report=term-missing
+# gate de cobertura: 90% (configurado em pyproject.toml)
+# cobre: scanner/, services/, repositories/, security/
 ```
-
-O gate de cobertura (90%, configurado em `backend/pyproject.toml`) cobre os
-módulos de `scanner/`, `services/`, `repositories/` e `security/`.
 
 ```bash
 cd frontend
-npm run build   # type-check (tsc -b) + build de produção
+npm run build   # tsc + build de produção
 npm run lint
 ```
 
-## Qualidade de código
-
-```bash
-cd backend
-black app tests
-isort app tests
-ruff check app tests --fix
-pre-commit install   # roda essas checagens automaticamente antes de cada commit
-```
-
-Padrão de commits: [Conventional Commits](https://www.conventionalcommits.org/)
-(`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, ...).
+---
 
 ## Como estender
 
-- **Adicionar uma regra de detecção** → [`docs/adding-a-rule.md`](docs/adding-a-rule.md)
-- **Adicionar suporte a uma linguagem** → [`docs/adding-a-language.md`](docs/adding-a-language.md)
-- **Entender o fluxo interno de um scan** → [`docs/architecture.md`](docs/architecture.md)
+- **Adicionar uma regra** → [`docs/adding-a-rule.md`](docs/adding-a-rule.md)
+- **Adicionar uma linguagem** → [`docs/adding-a-language.md`](docs/adding-a-language.md)
+- **Arquitetura interna** → [`docs/architecture.md`](docs/architecture.md)
+- **Roadmap** → [`docs/roadmap.md`](docs/roadmap.md)
 
-## Como contribuir
-
-1. Crie uma branch a partir de `main`.
-2. Rode `black`, `isort`, `ruff` (backend) e `npm run lint` (frontend) antes
-   de abrir o PR — o `pre-commit` automatiza isso.
-3. Adicione testes cobrindo a mudança (matcher novo → teste com trecho
-   vulnerável e trecho seguro; endpoint novo → teste de integração).
-4. Descreva no PR o *porquê* da mudança, não só o *o quê*.
-
-## Roadmap
-
-O que já está implementado (IA, colaboração por projeto, Git privado,
-publicação de imagens no GHCR via CI) e o que é ponto de extensão
-preparado mas ainda não implementado (plugins de IDE, execução
-distribuída, SSO/organizações, etc.): [`docs/roadmap.md`](docs/roadmap.md).
+---
 
 ## Licença
 
-[MIT](LICENSE).
+[MIT](LICENSE)
